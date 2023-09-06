@@ -4,7 +4,7 @@ struct comida {
     comida *sig;
 
 };
-
+//t
 
 struct tablaHash {
 	int tamanio;
