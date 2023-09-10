@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cassert>
+#include <cstring>
 using namespace std;
 
 struct _cabezalTabla;
@@ -9,7 +10,7 @@ typedef struct _cabezalTabla* TablaComida;
 //La tabla de Hash
 struct nodoLista{
 	int pos;
-	string comida;
+	char* comida;
 	nodoLista *sig;
 
 
@@ -23,18 +24,39 @@ struct _cabezalTabla{
 
 struct nodoHeap{
 	int repeticiones;
-	string comida;
+	char* comida;
 };
  
 
+char* copiaChar(char* rango) {
+	assert(rango != NULL);
+	char pos = rango[0];
+	int largo = 0;
+	while (pos != '\0') {
+		largo++;
+		pos = rango[largo];
+	}
+	char* nuevo = new char[largo + 1];
+	nuevo[largo] = '\0';
+	for (int i = 0; i < largo; i++) {
+		nuevo[i] = rango[i];
+	}
+	return nuevo;
+}
+int hashAux(char* palabra){
+	int h =0;
+	for(int i= 0; palabra[i]!='\0'; i++){
+		h=h +palabra[i]*(i+1);
+	}
+	return h;
+}
+	
 
-
-
-bool existeComida(TablaComida t, string comida) {
-	int pos = hashAux(d, t->cota);
+bool existeComida(TablaComida t, char* comida) {
+	int pos = hashAux(comida);
 	nodoLista* l = t->tabla[pos];
 	while (l != NULL) {
-		if (l->comida == comida) {
+		if (strcmp(l->comida, comida) == 0) {
 			return true;
 
 		}
@@ -51,94 +73,84 @@ private:
 	int total;
 	int libre;
 
-	void intercambiar(int x, int y)
-	{
-		nodoHeap *aux = this->arr[x];
-		this->arr[x] = this->arr[y];
-		this->arr[y]= aux;
-	}
-
-	int padre(int pos){
-		return pos/2;
-	}
-
-	bool hijosMenor(int pos, int posPadre){
-		return this->arr[pos] < this->arr[posPadre];
+	bool menor(int a, int b) {
+        return this->arr[a] < this->arr[b];
 	}
 
 
-	
-	void flotar(int pos){
-		if (pos>1){
-			int posPadre = padre(pos);
-			if (hijosMenor(pos,posPadre)){
-				intercambiar(pos,posPadre);
+	void swap(int a, int b) {
+        nodoHeap *aux = this->arr[a];
+		this->arr[a] = this->arr[b];
+		this->arr[b]= aux;
+    }
+
+	void flotar(int pos) {
+        if (pos > 1){
+			int posPadre = pos/2;
+			if (menor(this->arr[pos]->repeticiones,this->arr[posPadre]->repeticiones)){
+				swap(pos,posPadre);
 				flotar(posPadre);
 			}
-
-		}
+    	}
 	}
 
-	int posHijoIzquierdo(int pos){
-		return pos *2;
-	}
 
-	int posHijoDerecho(int pos){
-		return pos *2+1;
-	}
+	 void hundir(int pos) {
+        while (pos * 2 <= this->total) {
+            int hijoACambiar = pos * 2;
+            if (hijoACambiar + 1 <= this->total && menor(this->arr[hijoACambiar + 1]->repeticiones, this->arr[hijoACambiar]->repeticiones)) {
+                hijoACambiar++;
+            }
+            if (menor(this->arr[hijoACambiar]->repeticiones, this->arr[pos]->repeticiones)) {
+                swap(pos, hijoACambiar);
+                pos = hijoACambiar;
+            } else
+                return;
+        }
+    }
 
-	void hundir(int pos){
-		int posIzq = posHijoIzquierdo(pos);
-		int posDer = posHijoDerecho(pos);
-		int hijoMenor = posIzq;
-
-		if (posIzq< this->ultimoLibre && posDer >+ this->ultimoLibre){
-			if (this->arr[pos]< this->arr[posIzq]){
-			intercambiar(pos,posIzq);
-			hundir(posIzq);
-
-		}
-
-
-		if(posDer < this->ultimoLibre){
-			if (this->arr[posIzq] > this->arr[posDer]){
-			hijoMenor = posDer;
-			}
-		}
-		if (this->arr[pos]< this->arr[hijoMenor]){
-			intercambiar(pos,hijoMenor);
-			hundir(hijoMenor);
-
-		}
-		}
-
-
-
-	}
-
-	void insertarAux(int elemento, int vieneDe){
+	void insertarAux(char* comida){
 		if (!this->estaLleno()){
 			nodoHeap * nuevo = new nodoHeap;
-			nuevo->dato = elemento;
-			nuevo->vieneDe = vieneDe;
-			this -> arr[this->ultimoLibre] = nuevo;
-			this-> flotar(this->ultimoLibre);
-			this->ultimoLibre++;
+			nuevo->repeticiones = 1;
+			nuevo->comida = comida;
+			this -> arr[this->libre] = nuevo;
+			//this-> flotar(this->libre);
+			this->libre++;
 
 		}
 
 	}
 
-	nodoHeap * obtenerMinimoAux(){
-		nodoHeap* ret = NULL;
+	char* obtenerYborrarTope(){
+		char* retorno = NULL;
 		if (!this->esVacio()){
-			ret = this->arr[1];
-			this->arr[1] = this->arr[this->ultimoLibre-1];
-			this->ultimoLibre--;
+			retorno = this->arr[1]->comida;
+			this->arr[1] = this->arr[this->libre-1];
+			this->libre--;
 			hundir(1);
 			
 		}
+		return retorno;
+	}
+
+
+	int devPosYAumentarRepAux(int pos){
+		int ret = 0;
+		char* copia = copiaChar(this->arr[pos]->comida);
+		this->arr[pos]->repeticiones++;
+		this-> flotar(this->arr[pos]->repeticiones);
+		for(int i= 1; i<101; i++){
+			if (this->arr[i]->comida == copia){
+			ret = i;
+			}
+		}
 		return ret;
+	}
+
+
+	int devolverLibreAux(){
+		return this->libre;
 	}
 
 public:
@@ -159,15 +171,26 @@ public:
 		return this->libre >= this->total+1;
 	}
 
-	void insertar(int nuevoElemento, int vieneDe){
-		this->insertarAux(nuevoElemento, vieneDe);
+	
+	
+	char* tope(){
+		return this->obtenerYborrarTope();
+
 
 	}
-	
-	nodoHeap * obtenerMinimo(){
-		this->obtenerMinimoAux();
 
 
+	void insertar(char* comida){
+		this->insertarAux(comida);
+	}
+
+
+	int devPosYAumentarRep(int pos){
+		return this->devPosYAumentarRepAux(pos);
+	}
+
+	int devolverLibre(){
+		return this->devolverLibreAux();
 	}
 
 };
@@ -176,29 +199,35 @@ public:
 int main(){
 	int cantidadComida;
 	cin >> cantidadComida;
-	TablaComida tabla = new _cabezalTabla [101]();
-	string comida;
+	TablaComida t = new _cabezalTabla [101]();
+	char* comida;
+	int posHash;
+	MaxHeap* heap = new MaxHeap (cantidadComida);
 	for (int i=0; i<cantidadComida; i++){
 		cin >> comida;
-		if (existeComida(tabla,comida)){
-			//Aumentar la cantidad del arbol
+		if (existeComida(t,comida)){
+			int pos= hashAux(comida);
+			nodoLista* l = t->tabla[pos];
+			while(l!=NULL&& l->comida!=comida){
+				l=l->sig;
+			}
+			posHash = heap->devPosYAumentarRep(l->pos);
+			l->pos = posHash;
+			
 		} else {
-		int pos = hashAux(d, t->cota);
+		int pos = hashAux(comida);
 		nodoLista* l = new nodoLista;
-		l->pos = NULL;
+		l->pos = heap->devolverLibre() ;
 		l->comida = comida;
 		l->sig = t->tabla[pos];
 		t->tabla[pos] = l;
-		//Insertar del arbol
+		heap->insertar(comida);
 		}
 	}
+	while(!heap->esVacio()){
+		cout << heap->tope() << endl;
+	}
 }
-
-
-
-
-// Hacemos el eciste si loencuentra va al hash busca la posicion y en la posicion esa comparas los trings y te da la posicion del heap. Moves el heap y la posicion del nodo del hash.
-//Hacer un bool si se movio 
 
     
 LETRA OBL: https://docs.google.com/document/d/18PWOkyKHo7aE4yqHrv65PvZ1DG0_qGlH6MldU5RvKrs/edit#heading=h.m4nhenxfjtxj
