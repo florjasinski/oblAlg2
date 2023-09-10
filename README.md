@@ -113,7 +113,7 @@ private:
 		if (!this->estaLleno()){
 			nodoHeap * nuevo = new nodoHeap;
 			nuevo->repeticiones = 1;
-			nuevo->comida = comida;
+			nuevo->comida = copiaChar(comida);
 			this -> arr[this->libre] = nuevo;
 			//this-> flotar(this->libre);
 			this->libre++;
@@ -139,7 +139,8 @@ private:
 		int ret = 0;
 		char* copia = copiaChar(this->arr[pos]->comida);
 		this->arr[pos]->repeticiones++;
-		this-> flotar(this->arr[pos]->repeticiones);
+		//this-> flotar(this->arr[pos]->repeticiones);
+		this-> flotar(pos);
 		for(int i= 1; i<101; i++){
 			if (this->arr[i]->comida == copia){
 			ret = i;
@@ -218,7 +219,7 @@ int main(){
 		int pos = hashAux(comida);
 		nodoLista* l = new nodoLista;
 		l->pos = heap->devolverLibre() ;
-		l->comida = comida;
+		l->comida = copiaChar(comida);
 		l->sig = t->tabla[pos];
 		t->tabla[pos] = l;
 		heap->insertar(comida);
@@ -229,5 +230,5 @@ int main(){
 	}
 }
 
-    
+   
 LETRA OBL: https://docs.google.com/document/d/18PWOkyKHo7aE4yqHrv65PvZ1DG0_qGlH6MldU5RvKrs/edit#heading=h.m4nhenxfjtxj
