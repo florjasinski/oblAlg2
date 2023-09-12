@@ -10,8 +10,10 @@ typedef struct _cabezalTabla* TablaComida;
 //La tabla de Hash
 struct nodoLista{
 	int pos;
-	char* comida;
+	string comida;
 	nodoLista *sig;
+	nodoLista():pos(0), comida(NULL), sig(NULL){};
+
 
 
 };
@@ -24,7 +26,7 @@ struct _cabezalTabla{
 
 struct nodoHeap{
 	int repeticiones;
-	char* comida;
+	string comida;
 };
  
 
@@ -43,7 +45,9 @@ char* copiaChar(char* rango) {
 	}
 	return nuevo;
 }
-int hashAux(char* palabra){
+
+
+int hashAux(string palabra){
 	int h =0;
 	for(int i= 0; palabra[i]!='\0'; i++){
 		h=h +palabra[i]*(i+1);
@@ -52,14 +56,17 @@ int hashAux(char* palabra){
 }
 	
 
-bool existeComida(TablaComida t, char* comida) {
-	int pos = hashAux(comida);
+bool existeComida(TablaComida t, string comida) {
+	cout <<"hola";
+	int pos = abs(hashAux(comida))%101;
 	nodoLista* l = t->tabla[pos];
+	cout << "entra";
 	while (l != NULL) {
-		if (strcmp(l->comida, comida) == 0) {
+		if (l->comida.compare(comida)) {
 			return true;
 
 		}
+		cout << "sale";
 		l = l->sig;
 	}
 	return false;
@@ -109,11 +116,11 @@ private:
         }
     }
 
-	void insertarAux(char* comida){
+	void insertarAux(string comida){
 		if (!this->estaLleno()){
 			nodoHeap * nuevo = new nodoHeap;
 			nuevo->repeticiones = 1;
-			nuevo->comida = copiaChar(comida);
+			nuevo->comida = comida;
 			this -> arr[this->libre] = nuevo;
 			//this-> flotar(this->libre);
 			this->libre++;
@@ -122,8 +129,8 @@ private:
 
 	}
 
-	char* obtenerYborrarTope(){
-		char* retorno = NULL;
+	string obtenerYborrarTope(){
+		string retorno = NULL;
 		if (!this->esVacio()){
 			retorno = this->arr[1]->comida;
 			this->arr[1] = this->arr[this->libre-1];
@@ -137,12 +144,12 @@ private:
 
 	int devPosYAumentarRepAux(int pos){
 		int ret = 0;
-		char* copia = copiaChar(this->arr[pos]->comida);
+		string copia =this->arr[pos]->comida;
 		this->arr[pos]->repeticiones++;
 		//this-> flotar(this->arr[pos]->repeticiones);
 		this-> flotar(pos);
 		for(int i= 1; i<101; i++){
-			if (this->arr[i]->comida == copia){
+			if (this->arr[i]->comida.compare(copia)){
 			ret = i;
 			}
 		}
@@ -174,14 +181,14 @@ public:
 
 	
 	
-	char* tope(){
+	string tope(){
 		return this->obtenerYborrarTope();
 
 
 	}
 
 
-	void insertar(char* comida){
+	void insertar(string comida){
 		this->insertarAux(comida);
 	}
 
@@ -201,32 +208,34 @@ int main(){
 	int cantidadComida;
 	cin >> cantidadComida;
 	TablaComida t = new _cabezalTabla [101]();
-	char* comida;
+	string comida;
 	int posHash;
 	MaxHeap* heap = new MaxHeap (cantidadComida);
 	for (int i=0; i<cantidadComida; i++){
 		cin >> comida;
 		if (existeComida(t,comida)){
-			int pos= hashAux(comida);
+			cout <<"Entra del if";
+			int pos= abs(hashAux(comida))%101;
 			nodoLista* l = t->tabla[pos];
 			while(l!=NULL&& l->comida!=comida){
 				l=l->sig;
 			}
 			posHash = heap->devPosYAumentarRep(l->pos);
 			l->pos = posHash;
+			cout <<"Sale del if";
 			
 		} else {
-		int pos = hashAux(comida);
+		int pos = abs(hashAux(comida))%101;
 		nodoLista* l = new nodoLista;
 		l->pos = heap->devolverLibre() ;
-		l->comida = copiaChar(comida);
+		l->comida = comida;
 		l->sig = t->tabla[pos];
 		t->tabla[pos] = l;
 		heap->insertar(comida);
 		}
 	}
 	while(!heap->esVacio()){
-	    char* tope = heap->tope();
+	    string tope = heap->tope();
 		cout << tope << endl;
 	}
 }
