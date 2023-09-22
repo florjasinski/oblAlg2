@@ -1,247 +1,333 @@
 #include <iostream>
 #include <cassert>
 #include <cstring>
+#include <vector> // Agregar la librería vector
 using namespace std;
 
-struct _cabezalTabla;
-typedef struct _cabezalTabla* TablaComida;
-
-
-//La tabla de Hash
-struct nodoLista{
-	int pos;
-	string comida;
-	nodoLista *sig;
-	nodoLista():pos(0), comida(NULL), sig(NULL){};
-
-
-
+struct nodoHeap
+{
+    int repeticiones;
+    string comida;
 };
-
-struct _cabezalTabla{
-	nodoLista** tabla;
-	int cantidad;
-
-};
-
-struct nodoHeap{
-	int repeticiones;
-	string comida;
-};
- 
-
-char* copiaChar(char* rango) {
-	assert(rango != NULL);
-	char pos = rango[0];
-	int largo = 0;
-	while (pos != '\0') {
-		largo++;
-		pos = rango[largo];
-	}
-	char* nuevo = new char[largo + 1];
-	nuevo[largo] = '\0';
-	for (int i = 0; i < largo; i++) {
-		nuevo[i] = rango[i];
-	}
-	return nuevo;
-}
-
-
-int hashAux(string palabra){
-	int h =0;
-	for(int i= 0; palabra[i]!='\0'; i++){
-		h=h +palabra[i]*(i+1);
-	}
-	return h;
-}
-	
-
-bool existeComida(TablaComida t, string comida) {
-	cout <<"hola";
-	int pos = abs(hashAux(comida))%101;
-	nodoLista* l = t->tabla[pos];
-	cout << "entra";
-	while (l != NULL) {
-		if (l->comida.compare(comida)) {
-			return true;
-
-		}
-		cout << "sale";
-		l = l->sig;
-	}
-	return false;
-}
-
 
 class MaxHeap
 {
 private:
-	nodoHeap** arr;
-	int total;
-	int libre;
+    nodoHeap** arr;
+    int capacidad;
+    int ultimoLibre;
 
-	bool menor(int a, int b) {
-        return this->arr[a] < this->arr[b];
-	}
+    
 
-
-	void swap(int a, int b) {
-        nodoHeap *aux = this->arr[a];
-		this->arr[a] = this->arr[b];
-		this->arr[b]= aux;
+    bool menor(int a, int b) {
+    if (this->arr[a]->repeticiones > this->arr[b]->repeticiones) {
+        return true;
+    } else if (this->arr[a]->repeticiones == this->arr[b]->repeticiones) {
+        // Si las repeticiones son iguales, compara las cadenas en orden alfabético
+        return compararString(this->arr[a]->comida, this->arr[b]->comida);
     }
-
-	void flotar(int pos) {
-        if (pos > 1){
-			int posPadre = pos/2;
-			if (menor(this->arr[pos]->repeticiones,this->arr[posPadre]->repeticiones)){
-				swap(pos,posPadre);
-				flotar(posPadre);
-			}
-    	}
-	}
-
-
-	 void hundir(int pos) {
-        while (pos * 2 <= this->total) {
-            int hijoACambiar = pos * 2;
-            if (hijoACambiar + 1 <= this->total && menor(this->arr[hijoACambiar + 1]->repeticiones, this->arr[hijoACambiar]->repeticiones)) {
-                hijoACambiar++;
-            }
-            if (menor(this->arr[hijoACambiar]->repeticiones, this->arr[pos]->repeticiones)) {
-                swap(pos, hijoACambiar);
-                pos = hijoACambiar;
-            } else
-                return;
-        }
-    }
-
-	void insertarAux(string comida){
-		if (!this->estaLleno()){
-			nodoHeap * nuevo = new nodoHeap;
-			nuevo->repeticiones = 1;
-			nuevo->comida = comida;
-			this -> arr[this->libre] = nuevo;
-			//this-> flotar(this->libre);
-			this->libre++;
-
-		}
-
-	}
-
-	string obtenerYborrarTope(){
-		string retorno = NULL;
-		if (!this->esVacio()){
-			retorno = this->arr[1]->comida;
-			this->arr[1] = this->arr[this->libre-1];
-			this->libre--;
-			hundir(1);
-			
-		}
-		return retorno;
-	}
-
-
-	int devPosYAumentarRepAux(int pos){
-		int ret = 0;
-		string copia =this->arr[pos]->comida;
-		this->arr[pos]->repeticiones++;
-		//this-> flotar(this->arr[pos]->repeticiones);
-		this-> flotar(pos);
-		for(int i= 1; i<101; i++){
-			if (this->arr[i]->comida.compare(copia)){
-			ret = i;
-			}
-		}
-		return ret;
-	}
-
-
-	int devolverLibreAux(){
-		return this->libre;
-	}
-
-public:
-	MaxHeap(int tamanio)
-	{
-		this->arr = new nodoHeap*[tamanio+1]();
-		this->total= tamanio;
-		this->libre = 1;
-	}
-
-	bool esVacio()
-	{
-		return this->libre ==1;
-	}
-
-	bool estaLleno()
-	{
-		return this->libre >= this->total+1;
-	}
-
-	
-	
-	string tope(){
-		return this->obtenerYborrarTope();
-
-
-	}
-
-
-	void insertar(string comida){
-		this->insertarAux(comida);
-	}
-
-
-	int devPosYAumentarRep(int pos){
-		return this->devPosYAumentarRepAux(pos);
-	}
-
-	int devolverLibre(){
-		return this->devolverLibreAux();
-	}
-
-};
-
-
-int main(){
-	int cantidadComida;
-	cin >> cantidadComida;
-	TablaComida t = new _cabezalTabla [101]();
-	string comida;
-	int posHash;
-	MaxHeap* heap = new MaxHeap (cantidadComida);
-	for (int i=0; i<cantidadComida; i++){
-		cin >> comida;
-		if (existeComida(t,comida)){
-			cout <<"Entra del if";
-			int pos= abs(hashAux(comida))%101;
-			nodoLista* l = t->tabla[pos];
-			while(l!=NULL&& l->comida!=comida){
-				l=l->sig;
-			}
-			posHash = heap->devPosYAumentarRep(l->pos);
-			l->pos = posHash;
-			cout <<"Sale del if";
-			
-		} else {
-		int pos = abs(hashAux(comida))%101;
-		nodoLista* l = new nodoLista;
-		l->pos = heap->devolverLibre() ;
-		l->comida = comida;
-		l->sig = t->tabla[pos];
-		t->tabla[pos] = l;
-		heap->insertar(comida);
-		}
-	}
-	while(!heap->esVacio()){
-	    string tope = heap->tope();
-		cout << tope << endl;
-	}
+    return false;
 }
 
 
+    void swap(int a, int b)
+    {
+        nodoHeap *aux = this->arr[a];
+        this->arr[a] = this->arr[b];
+        this->arr[b] = aux;
+        
+    }
+
+    
 
 
-   
-LETRA OBL: https://docs.google.com/document/d/18PWOkyKHo7aE4yqHrv65PvZ1DG0_qGlH6MldU5RvKrs/edit#heading=h.m4nhenxfjtxj
+    void flotar(int pos) {
+        if (pos > 1) {
+            int posPadre = pos / 2;
+            if (menor(pos, posPadre)) {
+               
+                swap(pos, posPadre);
+                flotar(posPadre);
+            }
+        }
+    }
+
+    void hundir(int pos) {
+        while (pos * 2 <= ultimoLibre) {
+            int hijoACambiar = pos * 2;
+            if (hijoACambiar + 1 <= ultimoLibre && menor(hijoACambiar + 1, hijoACambiar)) {
+                hijoACambiar++;
+                
+            }
+            if (menor(hijoACambiar, pos)) {
+                swap(pos, hijoACambiar);
+                pos = hijoACambiar;
+                 
+            } else {
+                
+                return;
+            }
+        }
+    }
+
+
+
+    void insertarAux(string comida, int repeticiones)
+    {
+       
+        if (!this->estaLleno())
+        {
+            
+            nodoHeap *nuevo = new nodoHeap;
+            nuevo->repeticiones = repeticiones;
+            nuevo->comida = comida;
+            this->arr[this->ultimoLibre] = nuevo;
+            flotar(this->ultimoLibre);
+            this->ultimoLibre++;
+             
+        }
+    }
+
+    
+     string obtenerYborrarTope(){
+        string retorno;
+        
+        if (!this->esVacio())
+        {
+            retorno = this->arr[1]->comida;
+            //delete this->arr[1]; // Liberar memoria del nodo eliminado
+            this->arr[1] = this->arr[this->ultimoLibre - 1];
+            this->ultimoLibre--;
+            hundir(1);
+            
+        }
+     
+        return retorno;
+    }
+
+    bool compararString(string c1, string c2)
+	{
+		int i = 0;
+		while (i != c1.length() || i != c1.length())
+		{
+			if (c1.at(i) == c2.at(i))
+			{
+				i++;
+			}
+			else if (c1.at(i) > c2.at(i))
+			{
+				return false;
+			}
+			else
+			{
+				return true;
+			}
+		}
+	}
+
+
+public:
+    MaxHeap(int tamanio)
+    {
+
+        this->arr = new nodoHeap*[tamanio+1]();
+        this->capacidad= tamanio;
+        this->ultimoLibre = 1;
+    
+    }
+
+    bool esVacio()
+    {
+        
+        return this->ultimoLibre == 1;
+    }
+
+    bool estaLleno()
+    {
+        
+        return this->ultimoLibre >= this->capacidad + 1;
+    }
+
+    string tope()
+    {
+        
+        return this->obtenerYborrarTope();
+    }
+
+    void insertar(string comida, int repeticiones)
+    {
+    
+        this->insertarAux(comida, repeticiones);
+    }
+
+
+    MaxHeap() {
+        delete[] arr;
+    }
+};
+
+
+	
+#include <iostream>
+#include <cassert>
+#include <cstring>
+using namespace std;
+
+struct nodoLista {
+    int repeticiones;
+    string comida;
+    nodoLista* sig;
+};
+
+class tablaHash {
+private:
+    nodoLista** tabla;
+    int cantidad;
+
+    int funcionHashAux(string comida) {
+        int h = 0;
+        for (int i = 0; i < comida.length(); i++) {
+            h = (h * 31 + comida[i]) % 101;
+        }
+        return h;
+    }
+
+    void insertarComidaAux(string comida, nodoLista*& t) {
+        if (t == NULL) {
+            nodoLista* l = new nodoLista();
+            l->repeticiones = 1;
+            l->comida = comida;
+            l->sig = NULL;
+            t = l;
+            this->cantidad++;
+        } else {
+            nodoLista* actual = t;
+            while (actual != NULL) {
+                if (actual->comida == comida) {
+                    actual->repeticiones++;
+                    return; // Incrementar repeticiones si el plato ya existe
+                }
+                actual = actual->sig;
+            }
+            nodoLista* nuevo = new nodoLista();
+            nuevo->repeticiones = 1;
+            nuevo->comida = comida;
+            nuevo->sig = t;
+            t = nuevo; // Agregar al principio de la lista si no se encuentra
+            this->cantidad++;
+        }
+    }
+
+    int obtenerRepeticionesAux() {
+    for(int i=0; i<101; i++){
+        nodoLista* l = tabla[i];
+        if (l != NULL) {
+            return l->repeticiones;
+        }
+    }
+    return 0; // Si no se encuentra la comida, se asume que no ha sido ordenada.
+    }
+
+
+    string obtenerComidaAux() {
+        for(int i=0; i<101; i++){
+            nodoLista* l = tabla[i];
+            if (l != NULL) {
+                string comida = l->comida;
+                nodoLista* borrar = l;
+                tabla[i] = l->sig; // Actualiza el puntero de la tabla para omitir el nodo
+                delete borrar; // Libera la memoria del nodo
+                this->cantidad--;
+                return comida;
+            }
+        }
+        return ""; // Si no se encuentra la comida, devuelve una cadena vacía.
+    }
+
+
+
+
+    
+
+public:
+    tablaHash(int tamanio) {
+    this->cantidad = 0;
+    this->tabla = new nodoLista*[tamanio]();
+
+    // Inicializa todos los elementos de la tabla con punteros nulos
+    for (int i = 0; i < tamanio; i++) {
+        tabla[i] = NULL;
+    }
+    }
+
+
+    int funcionHash(string comida) {
+        return this->funcionHashAux(comida);
+    }
+
+    void insertarComida(string comida){
+        int posHash = abs(this->funcionHash(comida));
+        this->insertarComidaAux(comida, tabla[posHash]);
+    }
+
+    int obtenerRepeticiones(){
+        return this->obtenerRepeticionesAux();
+    }
+
+    string obtenerComida(){
+        return this->obtenerComidaAux();
+    }
+
+    bool esVacia(){
+        return this->cantidad==0;
+    }
+
+    ~tablaHash() {
+        for (int i = 0; i < 101; i++) {
+            nodoLista* current = tabla[i];
+            while (current != NULL) {
+                nodoLista* temp = current;
+                current = current->sig;
+                delete temp;
+            }
+        }
+        delete[] tabla;
+    }
+};
+
+#include <iostream>
+#include <cassert>
+#include <cstring>
+#include "./pruebaTabla.cpp"
+#include "./pruebaHeap.cpp"
+
+using namespace std;
+
+int main() {
+    int cantidadComida;
+    cin >> cantidadComida;
+    tablaHash* t = new tablaHash(101);
+    string comida;
+
+    for (int i = 0; i < cantidadComida; i++) {
+        cin >> comida;
+        t->insertarComida(comida);
+    }
+
+    MaxHeap *heap = new MaxHeap(cantidadComida);
+    while (!(t->esVacia())){
+        int repeticiones = t->obtenerRepeticiones(); // Obtener las repeticiones desde la tabla hash
+        string comidaTabla = t->obtenerComida();
+        heap->insertar(comidaTabla, repeticiones); // Insertar la comida con sus repeticiones
+    }
+
+    while (!heap->esVacio()) {
+
+        cout << heap->tope() << endl;
+    }
+
+    delete t; 
+    delete heap; 
+
+    return 0;
+}
